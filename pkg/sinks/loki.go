@@ -67,6 +67,15 @@ func convertStreamTemplate(layout map[string]string, ev *kube.EnhancedEvent) (ma
 }
 
 func (l *Loki) Send(ctx context.Context, ev *kube.EnhancedEvent) error {
+	if l.cfg.Layout == nil {
+		l.cfg.Layout = make(map[string]interface{})
+	}
+	if l.cfg.StreamLabels == nil {
+		l.cfg.StreamLabels = make(map[string]string)
+	}
+	if l.cfg.Headers == nil {
+		l.cfg.Headers = make(map[string]string)
+	}
 	if ev.InvolvedObject.Kind == "Node" {
 		l.cfg.StreamLabels["host"] = ev.InvolvedObject.Name
 		delete(l.cfg.Layout, "name")
