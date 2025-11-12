@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/pubsub v1.49.0
 	github.com/IBM/sarama v1.45.1
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/aws/aws-sdk-go v1.55.6
+	github.com/aws/aws-sdk-go v1.55.8
 	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/goccy/go-yaml v1.17.1
 	github.com/hashicorp/golang-lru v1.0.2
