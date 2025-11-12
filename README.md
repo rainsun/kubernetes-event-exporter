@@ -520,5 +520,13 @@ receivers:
         X-Scope-OrgID: tennantID
       streamLabels:
         foo: bar
+        message: "{{ .Message }}"
+      layout:
+        message: "{{ .Message }}"
+        type: "{{ .Type }}"
+        reason: "{{ .Reason }}"
+        kind: "{{ .InvolvedObject.Kind }}"
+        name: "{{.InvolvedObject.Name }}"
+        source: "{{ .Source.Component }}"
       url: http://127.0.0.1:3100/loki/api/v1/push
 ```
