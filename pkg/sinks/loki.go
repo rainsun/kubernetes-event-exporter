@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -52,15 +52,32 @@ func generateTimestamp() string {
 	return strconv.FormatInt(time.Now().Unix(), 10) + "000000000"
 }
 
+func convertStreamTemplate(layout map[string]string, ev *kube.EnhancedEvent) (map[string]string, error) {
+	result := make(map[string]string)
+	for key, value := range layout {
+		rendered, err := GetString(ev, value)
+		if err != nil {
+			return nil, err
+		}
+
+		result[key] = rendered
+	}
+	return result, nil
+}
+
 func (l *Loki) Send(ctx context.Context, ev *kube.EnhancedEvent) error {
 	eventBody, err := serializeEventWithLayout(l.cfg.Layout, ev)
+	if err != nil {
+		return err
+	}
+	streamLabels, err := convertStreamTemplate(l.cfg.StreamLabels, ev)
 	if err != nil {
 		return err
 	}
 	timestamp := generateTimestamp()
 	a := LokiMsg{
 		Streams: []promtailStream{{
-			Stream: l.cfg.StreamLabels,
+			Stream: streamLabels,
 			Values: [][]string{{timestamp, string(eventBody)}},
 		}},
 	}
@@ -95,7 +112,7 @@ func (l *Loki) Send(ctx context.Context, ev *kube.EnhancedEvent) error {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
