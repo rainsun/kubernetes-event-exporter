@@ -17,7 +17,7 @@ require (
 	github.com/prometheus/client_golang v1.22.0
 	github.com/prometheus/exporter-toolkit v0.14.0
 	github.com/rs/zerolog v1.34.0
-	github.com/slack-go/slack v0.16.0
+	github.com/slack-go/slack v0.17.3
 	github.com/stretchr/testify v1.10.0
 	github.com/xdg-go/scram v1.1.2
 	google.golang.org/api v0.229.0
@@ -64,7 +64,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
-	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
