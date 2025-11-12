@@ -25,11 +25,12 @@ type LokiMsg struct {
 }
 
 type LokiConfig struct {
-	Layout       map[string]interface{} `yaml:"layout"`
-	StreamLabels map[string]string      `yaml:"streamLabels"`
-	TLS          TLS                    `yaml:"tls"`
-	URL          string                 `yaml:"url"`
-	Headers      map[string]string      `yaml:"headers"`
+	Layout           map[string]interface{} `yaml:"layout"`
+	StreamLabels     map[string]string      `yaml:"streamLabels"`
+	TLS              TLS                    `yaml:"tls"`
+	URL              string                 `yaml:"url"`
+	Headers          map[string]string      `yaml:"headers"`
+	IgnoreNamespaces []string               `yaml:"ignore_namespaces"`
 }
 
 type Loki struct {
@@ -66,14 +67,35 @@ func convertStreamTemplate(layout map[string]string, ev *kube.EnhancedEvent) (ma
 }
 
 func (l *Loki) Send(ctx context.Context, ev *kube.EnhancedEvent) error {
+	if ev.InvolvedObject.Kind == "Node" {
+		l.cfg.StreamLabels["host"] = ev.InvolvedObject.Name
+		delete(l.cfg.Layout, "name")
+	} else {
+		l.cfg.Layout["name"] = "{{ .InvolvedObject.Name }}"
+	}
+
 	eventBody, err := serializeEventWithLayout(l.cfg.Layout, ev)
 	if err != nil {
 		return err
 	}
+
+	for _, namespace := range l.cfg.IgnoreNamespaces {
+		if namespace == ev.InvolvedObject.Namespace {
+			log.Debug().Msgf("Skipping %s namespace, because it is in ignore list", ev.InvolvedObject.Namespace)
+			return nil
+		}
+	}
+
+	if ev.InvolvedObject.Namespace != "" {
+		l.cfg.StreamLabels["namespace"] = ev.InvolvedObject.Namespace
+		l.cfg.StreamLabels["index"] = l.cfg.StreamLabels["cluster"] + "-" + ev.InvolvedObject.Namespace
+	}
+
 	streamLabels, err := convertStreamTemplate(l.cfg.StreamLabels, ev)
 	if err != nil {
 		return err
 	}
+
 	timestamp := generateTimestamp()
 	a := LokiMsg{
 		Streams: []promtailStream{{
@@ -109,6 +131,10 @@ func (l *Loki) Send(ctx context.Context, ev *kube.EnhancedEvent) error {
 	if err != nil {
 		return err
 	}
+
+	delete(l.cfg.StreamLabels, "namespace")
+	delete(l.cfg.StreamLabels, "index")
+	delete(l.cfg.StreamLabels, "host")
 
 	defer resp.Body.Close()
 
