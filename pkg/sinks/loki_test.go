@@ -20,9 +20,10 @@ func TestLoki_Send(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer ts.Close()
-	client := Loki{cfg: &LokiConfig{URL: ts.URL}}
+	client, err := NewLoki(&LokiConfig{URL: ts.URL})
+	assert.NoError(t, err)
 
-	err := client.Send(context.Background(), &kube.EnhancedEvent{})
+	err = client.Send(context.Background(), &kube.EnhancedEvent{})
 
 	assert.NoError(t, err)
 }
@@ -39,12 +40,13 @@ func TestLoki_Send_StreamLabelsTemplated(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer ts.Close()
-	client := Loki{cfg: &LokiConfig{
+	client, err := NewLoki(&LokiConfig{
 		URL: ts.URL,
 		StreamLabels: map[string]string{
 			"app":              "kube-events",
 			"object_namespace": "{{ .InvolvedObject.Namespace }}",
-		}}}
+		}})
+	assert.NoError(t, err)
 
 	ev := &kube.EnhancedEvent{}
 	ev.Namespace = "default"
@@ -56,7 +58,7 @@ func TestLoki_Send_StreamLabelsTemplated(t *testing.T) {
 	ev.Message = "Successfully pulled image \"nginx:latest\""
 	ev.FirstTimestamp = v1.Time{Time: time.Now()}
 
-	err := client.Send(context.Background(), ev)
+	err = client.Send(context.Background(), ev)
 	assert.NoError(t, err)
 
 	var res LokiMsg
